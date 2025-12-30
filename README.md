@@ -4,7 +4,7 @@ A WebAssembly-based interactive game for learning star names, built with Rust an
 
 [![Live Demo](https://img.shields.io/badge/demo-live-blue?style=for-the-badge&logo=github)](https://wrightmikea.github.io/stargazer-poc/)
 
-<img src="https://github.com/wrightmikea/stargazer-poc/raw/main/images/screenshot.png?ts=1767126791" alt="Stargazer Screenshot" width="800">
+<img src="https://raw.githubusercontent.com/wrightmikea/stargazer-poc/main/images/screenshot.png?ts=1767126791" alt="Stargazer Screenshot" width="800">
 
 ## Overview
 
