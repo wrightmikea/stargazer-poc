@@ -198,13 +198,15 @@ fn test_viewport_zoom_maintains_named_star_visibility() {
     let visible_named: Vec<_> = catalog
         .named_stars()
         .into_iter()
-        .filter(|s| {
-            s.coord.dec >= dec_min && s.coord.dec <= dec_max && ra_in_range(s.coord.ra)
-        })
+        .filter(|s| s.coord.dec >= dec_min && s.coord.dec <= dec_max && ra_in_range(s.coord.ra))
         .collect();
 
     // Should have some named stars visible
-    assert!(!visible_named.is_empty(), "Expected visible named stars at zoom {}", viewport.zoom);
+    assert!(
+        !visible_named.is_empty(),
+        "Expected visible named stars at zoom {}",
+        viewport.zoom
+    );
 
     // Each should project to a valid screen position
     for star in visible_named {

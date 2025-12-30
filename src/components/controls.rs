@@ -66,6 +66,14 @@ pub fn controls(props: &ControlsProps) -> Html {
         })
     };
 
+    // Done button - show summary and reset
+    let on_show_summary = {
+        let on_action = props.on_action.clone();
+        Callback::from(move |_| {
+            on_action.emit(GameAction::ShowSummary);
+        })
+    };
+
     // Star count estimate based on magnitude
     let star_estimate = estimate_visible_stars(props.magnitude_limit);
 
@@ -123,6 +131,13 @@ pub fn controls(props: &ControlsProps) -> Html {
                         { "Grid" }
                     </button>
                 </div>
+            </div>
+
+            // Done button
+            <div class="control-group">
+                <button class="control-btn done" onclick={on_show_summary}>
+                    { "Done" }
+                </button>
             </div>
 
             // Help text

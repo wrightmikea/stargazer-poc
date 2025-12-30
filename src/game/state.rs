@@ -8,7 +8,7 @@ use crate::utils::Viewport;
 use std::rc::Rc;
 
 /// The complete game state
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct GameState {
     /// Current viewport configuration
     pub viewport: Viewport,
@@ -27,6 +27,9 @@ pub struct GameState {
 
     /// Score tracker
     pub score: ScoreState,
+
+    /// History of guesses for summary
+    pub guess_history: Vec<GuessSummary>,
 
     /// Currently selected star (highlighted)
     pub selected_star: Option<StarId>,
@@ -73,6 +76,19 @@ pub struct ScoreState {
     pub best_streak: u32,
 }
 
+/// Summary of a guess
+#[derive(Debug, Clone, PartialEq)]
+pub struct GuessSummary {
+    /// Star that was quizzed
+    pub star_name: String,
+
+    /// User's answer
+    pub user_answer: String,
+
+    /// Whether correct
+    pub was_correct: bool,
+}
+
 impl ScoreState {
     /// Calculate accuracy as a percentage
     pub fn accuracy(&self) -> f64 {
@@ -101,7 +117,7 @@ impl ScoreState {
 }
 
 /// UI-specific state
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone, PartialEq, Default)]
 pub struct UiState {
     /// Position for dropdown menu
     pub dropdown_position: Option<(f64, f64)>,
@@ -114,6 +130,9 @@ pub struct UiState {
 
     /// Toast/notification message
     pub toast_message: Option<String>,
+
+    /// Whether summary popup is shown
+    pub summary_shown: bool,
 }
 
 impl Default for GameState {
@@ -125,6 +144,7 @@ impl Default for GameState {
             show_constellations: false,
             quiz: None,
             score: ScoreState::default(),
+            guess_history: Vec::new(),
             selected_star: None,
             ui: UiState::default(),
         }
@@ -159,7 +179,7 @@ pub enum GameAction {
     },
     SelectAnswer(String),
     SubmitAnswer,
-    /// Combined action: select and immediately evaluate the answer
+    /// Combined action: select and immediately evaluate answer
     SelectAndSubmitAnswer(String),
     CloseQuiz,
     NextQuestion,
@@ -171,6 +191,8 @@ pub enum GameAction {
     HideHelp,
     ShowToast(String),
     ClearToast,
+    ShowSummary,
+    HideSummary,
 
     // Score
     ResetScore,
@@ -259,6 +281,13 @@ pub fn game_reducer(state: Rc<GameState>, action: GameAction) -> Rc<GameState> {
                         let correct = answer == &quiz.correct_name;
                         quiz.was_correct = Some(correct);
 
+                        // Record the guess
+                        new_state.guess_history.push(GuessSummary {
+                            star_name: quiz.correct_name.clone(),
+                            user_answer: answer.clone(),
+                            was_correct: correct,
+                        });
+
                         if correct {
                             new_state.score.record_correct();
                         } else {
@@ -275,6 +304,13 @@ pub fn game_reducer(state: Rc<GameState>, action: GameAction) -> Rc<GameState> {
                     quiz.answered = true;
                     let correct = answer == quiz.correct_name;
                     quiz.was_correct = Some(correct);
+
+                    // Record the guess
+                    new_state.guess_history.push(GuessSummary {
+                        star_name: quiz.correct_name.clone(),
+                        user_answer: answer,
+                        was_correct: correct,
+                    });
 
                     if correct {
                         new_state.score.record_correct();
@@ -322,6 +358,12 @@ pub fn game_reducer(state: Rc<GameState>, action: GameAction) -> Rc<GameState> {
         // Score
         GameAction::ResetScore => {
             new_state.score = ScoreState::default();
+        }
+        GameAction::ShowSummary => {
+            new_state.ui.summary_shown = true;
+        }
+        GameAction::HideSummary => {
+            new_state.ui.summary_shown = false;
         }
 
         // Force a view refresh by slightly nudging center_ra

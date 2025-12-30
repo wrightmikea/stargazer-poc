@@ -6,7 +6,9 @@ A WebAssembly-based interactive game for learning star names, built with Rust an
 
 Stargazer presents an interactive celestial map where users can test their knowledge of star names. The game displays a zoomable, pannable star map using SVG, and challenges users to identify stars from a multiple-choice dropdown menu.
 
-**[Live Demo](https://wrightmikea.github.io/stargazer-poc/?ts=1767056913000)**
+**[Live Demo](https://wrightmikea.github.io/stargazer-poc/?ts=17671160803N)**
+
+**[App Screenshot](./images/screenshot.png?ts=17671160803N)**
 
 The UI features a responsive two-panel layout:
 - **Left Panel (Star Map)**: Fills the available viewport space, displaying clickable stars

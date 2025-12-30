@@ -1,10 +1,11 @@
 //! Quiz generation and management
 //!
-//! Handles the logic for creating quiz questions, selecting distractors,
+//! Handles logic for creating quiz questions, selecting distractors,
 //! and managing quiz sessions.
 
-use crate::data::{Star, StarCatalog, StarId};
+use crate::data::{Star, StarCatalog, StarId, TileSystem, ZoomLevel};
 use rand::prelude::*;
+use std::collections::HashSet;
 
 /// Configuration for quiz generation
 #[derive(Debug, Clone)]
@@ -49,17 +50,179 @@ pub struct QuizQuestion {
 pub struct QuizGenerator<'a> {
     catalog: &'a StarCatalog,
     config: QuizConfig,
+    tile_system: Option<&'a TileSystem>,
+    current_zoom: ZoomLevel,
 }
 
 impl<'a> QuizGenerator<'a> {
     /// Create a new quiz generator
     pub fn new(catalog: &'a StarCatalog, config: QuizConfig) -> Self {
-        Self { catalog, config }
+        Self {
+            catalog,
+            config,
+            tile_system: None,
+            current_zoom: ZoomLevel(0),
+        }
+    }
+
+    /// Create quiz generator with tile system for spatial distractors
+    pub fn with_tiles(
+        catalog: &'a StarCatalog,
+        config: QuizConfig,
+        tile_system: &'a TileSystem,
+        zoom: ZoomLevel,
+    ) -> Self {
+        Self {
+            catalog,
+            config,
+            tile_system: Some(tile_system),
+            current_zoom: zoom,
+        }
+    }
+
+    /// Update current zoom level (for tile-based distractor selection)
+    pub fn set_zoom(&mut self, zoom: ZoomLevel) {
+        self.current_zoom = zoom;
+    }
+
+    /// Generate tile-aware distractors (mix of nearby and distant stars)
+    ///
+    /// This method selects distractors from:
+    /// - Same tile (if available)
+    /// - Adjacent tiles (nearby stars)
+    /// - Random distant tiles
+    pub fn generate_tile_distractors<R: Rng>(
+        &self,
+        correct_star: &Star,
+        count: usize,
+        rng: &mut R,
+    ) -> Vec<String> {
+        let mut used_names: HashSet<String> = HashSet::new();
+        let mut distractors = Vec::new();
+        let correct_name = correct_star.name.clone().unwrap_or_default();
+
+        used_names.insert(correct_name.clone());
+
+        // Try to use tile system if available
+        if let Some(tile_system) = self.tile_system.as_ref() {
+            if let Some(star_tiles) = tile_system.get_tiles_for_star(correct_star.id) {
+            // Find tile at current zoom
+            let current_tile = star_tiles.iter().find(|t| t.zoom == self.current_zoom);
+
+            if let Some(tile_id) = current_tile {
+                // Get named stars in same tile
+                if let Some(tile) = tile_system.get_tile(tile_id) {
+                    for &star_id in &tile.named_star_ids {
+                        if let Some(star) = self.catalog.get(star_id) {
+                            if let Some(ref name) = star.name {
+                                if !used_names.contains(name) && name.len() >= 3 {
+                                    distractors.push(name.clone());
+                                    used_names.insert(name.clone());
+
+                                    if distractors.len() >= count {
+                                        return distractors;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // If still need more, check adjacent tiles
+                if distractors.len() < count {
+                    let adjacent = tile_system.get_adjacent_tiles(tile_id);
+
+                    for tile in adjacent {
+                        for &star_id in &tile.named_star_ids {
+                            if let Some(star) = self.catalog.get(star_id) {
+                                if let Some(ref name) = star.name {
+                                    if !used_names.contains(name) && name.len() >= 3 {
+                                        distractors.push(name.clone());
+                                        used_names.insert(name.clone());
+
+                                        if distractors.len() >= count {
+                                            return distractors;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    if distractors.len() >= count {
+                        return distractors;
+                    }
+                }
+                }
+            }
+        }
+
+        // Fall back to random distant stars if needed
+        let all_named: Vec<_> = self
+            .catalog
+            .named_stars()
+            .into_iter()
+            .filter(|s| {
+                s.name
+                    .as_ref()
+                    .map_or(false, |n| !used_names.contains(n) && n.len() >= 3)
+            })
+            .collect();
+
+        let remaining = count - distractors.len();
+        let random_stars: Vec<_> = all_named.choose_multiple(rng, remaining).collect();
+
+        for star in random_stars {
+            if let Some(ref name) = star.name {
+                distractors.push(name.clone());
+                used_names.insert(name.clone());
+            }
+        }
+
+        distractors
     }
 
     /// Generate a question for a specific star
     pub fn generate_for_star<R: Rng>(&self, star: &Star, rng: &mut R) -> Option<QuizQuestion> {
         let correct_name = star.name.clone()?;
+
+        // Decide if this will be a "none of above" question
+        let is_none_question = self.config.include_none_option
+            && rng.gen::<f64>() < self.config.none_probability;
+
+        let mut choices = Vec::with_capacity(self.config.num_choices);
+
+        if is_none_question {
+            // Use tile-aware distractors if available, otherwise random
+            let distractors = if self.tile_system.is_some() {
+                self.generate_tile_distractors(star, self.config.num_choices - 1, rng)
+            } else {
+                self.catalog.random_distractors(
+                    &correct_name,
+                    self.config.num_choices - 1,
+                    rng,
+                )
+            };
+
+            choices.extend(distractors);
+            choices.push("none of above".to_string());
+        } else {
+            // Include correct answer
+            choices.push(correct_name.clone());
+
+            // Use tile-aware distractors if available, otherwise random
+            let distractors = if self.tile_system.is_some() {
+                self.generate_tile_distractors(star, self.config.num_choices - 1, rng)
+            } else {
+                self.catalog.random_distractors(
+                    &correct_name,
+                    self.config.num_choices - 1,
+                    rng,
+                )
+            };
+
+            choices.extend(distractors);
+        }
 
         // Decide if this will be a "none of above" question
         let is_none_question = self.config.include_none_option

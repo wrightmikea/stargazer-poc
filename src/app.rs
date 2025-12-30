@@ -2,27 +2,61 @@
 //!
 //! The root component that assembles all UI pieces and manages global state.
 
-use crate::components::{Controls, QuizDropdown, ScoreDisplay, StarMap};
-use crate::data::generate_placeholder_catalog;
+use crate::components::{Controls, QuizDropdown, ScoreDisplay, StarMap, SummaryPopup};
+use crate::data::{generate_placeholder_catalog, load_stars_from_json, StarCatalog, TileSystem, ZoomLevel};
 use crate::game::{game_reducer, GameAction, GameState, QuizConfig, QuizGenerator};
-use gloo::events::EventListener;
 use rand::SeedableRng;
 use std::rc::Rc;
-use wasm_bindgen::JsCast;
 use yew::prelude::*;
 
 /// The main application component
 #[function_component(App)]
 pub fn app() -> Html {
-    // Initialize the star catalog (would be loaded async in production)
-    let catalog = use_memo((), |_| generate_placeholder_catalog());
+    // Initialize star catalog - try to load from JSON, fallback to placeholder
+    let catalog = use_memo((), |_| {
+        #[cfg(target_arch = "wasm32")]
+        {
+            // In WASM, use placeholder for now
+            // TODO: Implement async loading from HTTP
+            return generate_placeholder_catalog();
+        }
+
+        #[cfg(not(target_arch = "wasm32"))]
+        {
+            // Try loading from JSON in development/testing
+            let result = load_stars_from_json();
+            if result.is_ok() {
+                let stars = result.unwrap();
+                let mut catalog = StarCatalog::new();
+                for star in stars {
+                    catalog.add_star(star);
+                }
+                catalog.rebuild_indices();
+                return catalog;
+            }
+        }
+
+        #[allow(unreachable_code)]
+        {
+            generate_placeholder_catalog()
+        }
+    });
+
+    // Build tile system from catalog
+    let tile_system = use_memo(catalog.clone(), |cat| {
+        let stars: Vec<_> = cat.all_stars().cloned().collect();
+        TileSystem::from_stars(&stars)
+    });
 
     // Game state with reducer
     let state = use_reducer(GameState::default);
 
+    // Create a clone of state for use in callbacks
+    let state_clone = state.clone();
+
     // Create action dispatcher
     let dispatch = {
-        let state = state.clone();
+        let state = state_clone.clone();
         Callback::from(move |action: GameAction| {
             state.dispatch(action);
         })
@@ -32,7 +66,8 @@ pub fn app() -> Html {
     let on_action = {
         let dispatch = dispatch.clone();
         let catalog = catalog.clone();
-        let _state_snapshot = (*state).clone();
+        let tile_system = tile_system.clone();
+        let state_for_quiz = state_clone.clone();
 
         Callback::from(move |action: GameAction| {
             // Special handling for star selection
@@ -42,7 +77,18 @@ pub fn app() -> Html {
                     if star.has_name() {
                         let mut rng = rand::rngs::SmallRng::from_entropy();
                         let config = QuizConfig::default();
-                        let generator = QuizGenerator::new(&catalog, config);
+
+                        // Calculate zoom level based on viewport zoom
+                        let current_zoom = state_for_quiz.viewport.zoom;
+                        let zoom_level = ZoomLevel((current_zoom.log2().floor() as u8).clamp(0, 5));
+
+                        // Use tile-aware quiz generator
+                        let generator = QuizGenerator::with_tiles(
+                            &catalog,
+                            config,
+                            &tile_system,
+                            zoom_level,
+                        );
 
                         if let Some(question) = generator.generate_for_star(star, &mut rng) {
                             dispatch.emit(GameAction::StartQuiz {
@@ -59,55 +105,8 @@ pub fn app() -> Html {
         })
     };
 
-    // Keyboard listener for Escape key to close quiz
-    {
-        let dispatch = dispatch.clone();
-        let has_quiz = state.quiz.is_some();
-        use_effect_with(has_quiz, move |_| {
-            let listener = if has_quiz {
-                let window = web_sys::window().expect("no window");
-                Some(EventListener::new(&window, "keydown", move |event| {
-                    let event = event.dyn_ref::<web_sys::KeyboardEvent>().unwrap();
-                    if event.key() == "Escape" {
-                        dispatch.emit(GameAction::CloseQuiz);
-                    }
-                }))
-            } else {
-                None
-            };
-            move || drop(listener)
-        });
-    }
-
-    // Window resize listener to update viewport size
-    {
-        let dispatch = dispatch.clone();
-        use_effect_with((), move |_| {
-            let window = web_sys::window().expect("no window");
-
-            let update_size = {
-                let window = window.clone();
-                let dispatch = dispatch.clone();
-                Callback::from(move |_| {
-                    let width = window.inner_width().unwrap().as_f64().unwrap_or(1200.0);
-                    let height = window.inner_height().unwrap().as_f64().unwrap_or(600.0);
-
-                    dispatch.emit(GameAction::SetViewportSize(width, height));
-                })
-            };
-
-            update_size.emit(());
-
-            let listener = EventListener::new(&window, "resize", move |_| {
-                update_size.emit(());
-            });
-
-            move || drop(listener)
-        });
-    }
-
     // Build the quiz dropdown if active
-    let quiz_panel = if let (Some(quiz), Some(pos)) = (&state.quiz, state.ui.dropdown_position) {
+    let quiz_panel = if let (Some(quiz), Some(pos)) = (state_clone.quiz.clone(), state_clone.ui.dropdown_position.clone()) {
         html! {
             <QuizDropdown
                 quiz={quiz.clone()}
@@ -119,12 +118,25 @@ pub fn app() -> Html {
         Html::default()
     };
 
+    // Build summary popup if active
+    let summary_panel = if state_clone.ui.summary_shown {
+        html! {
+            <SummaryPopup
+                guesses={state_clone.guess_history.clone()}
+                score={state_clone.score.clone()}
+                on_action={on_action.clone()}
+            />
+        }
+    } else {
+        Html::default()
+    };
+
     html! {
         <div class="app-container">
             <header class="app-header">
                 <h1 class="app-title">{ "✦ Stargazer" }</h1>
-                <p class="app-subtitle">{ "Test your knowledge of the night sky" }</p>
-                <ScoreDisplay score={state.score.clone()} />
+                <p class="app-subtitle">{ "Test your knowledge of night sky" }</p>
+                <ScoreDisplay score={state_clone.score.clone()} />
             </header>
 
             <main class="app-main">
@@ -132,10 +144,10 @@ pub fn app() -> Html {
                     <div class="star-map-container">
                         <StarMap
                             catalog={catalog.clone()}
-                            viewport={state.viewport}
-                            magnitude_limit={state.magnitude_limit}
-                            show_grid={state.show_grid}
-                            selected_star={state.selected_star}
+                            viewport={state_clone.viewport.clone()}
+                            magnitude_limit={state_clone.magnitude_limit.clone()}
+                            show_grid={state_clone.show_grid.clone()}
+                            selected_star={state_clone.selected_star.clone()}
                             on_action={on_action.clone()}
                         />
                     </div>
@@ -144,16 +156,27 @@ pub fn app() -> Html {
 
                 <aside class="sidebar">
                     <Controls
-                        zoom={state.viewport.zoom}
-                        magnitude_limit={state.magnitude_limit}
-                        show_grid={state.show_grid}
+                        zoom={state_clone.viewport.zoom}
+                        magnitude_limit={state_clone.magnitude_limit}
+                        show_grid={state_clone.show_grid}
                         on_action={on_action.clone()}
                     />
+                    { summary_panel }
                 </aside>
             </main>
 
             <footer class="app-footer">
-                <p>{ "Stargazer PoC • Built with Rust + Yew + WebAssembly" }</p>
+                <div class="footer-content">
+                    <p>
+                        <span class="copyright">{ "© 2025 Michael A. Wright" }</span>
+                        <span class="separator">{ "•" }</span>
+                        <span class="license">{ "MIT License" }</span>
+                        <span class="separator">{ "•" }</span>
+                        <span class="build-info">{ format!("Build: 2025-12-29T17:33:58-08:00 (}}) • Host: mighty • SHA: 6b4f545021f14315eabad7d367a0e8a4a356b255") }</span>
+                        <span class="separator">{ "•" }</span>
+                        <a href="./images/screenshot.png?ts=17671160803N" class="screenshot-link" target="_blank">{ "Screenshot" }</a>
+                    </p>
+                </div>
             </footer>
         </div>
     }

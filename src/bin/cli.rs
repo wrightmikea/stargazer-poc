@@ -152,15 +152,20 @@ fn main() {
 
             let named = catalog.named_stars();
             if !named.is_empty() {
-                let avg_mag: f64 = named.iter().map(|s| s.magnitude).sum::<f64>() / named.len() as f64;
+                let avg_mag: f64 =
+                    named.iter().map(|s| s.magnitude).sum::<f64>() / named.len() as f64;
                 println!("\nNamed star statistics:");
                 println!("  Average magnitude: {:.2}", avg_mag);
 
-                let brightest = named.iter().min_by(|a, b| {
-                    a.magnitude.partial_cmp(&b.magnitude).unwrap()
-                });
+                let brightest = named
+                    .iter()
+                    .min_by(|a, b| a.magnitude.partial_cmp(&b.magnitude).unwrap());
                 if let Some(star) = brightest {
-                    println!("  Brightest: {} (mag {:.2})", star.display_name(), star.magnitude);
+                    println!(
+                        "  Brightest: {} (mag {:.2})",
+                        star.display_name(),
+                        star.magnitude
+                    );
                 }
             }
         }
@@ -180,9 +185,16 @@ fn main() {
             for q_num in 1..=count {
                 if let Some(question) = generator.generate_random(&mut rng) {
                     println!("Question {}/{}:", q_num, count);
-                    println!("Which star is located at RA {:.2}h, Dec {:.1}°?",
-                        catalog.get(question.target_star).map(|s| s.coord.ra).unwrap_or(0.0),
-                        catalog.get(question.target_star).map(|s| s.coord.dec).unwrap_or(0.0)
+                    println!(
+                        "Which star is located at RA {:.2}h, Dec {:.1}°?",
+                        catalog
+                            .get(question.target_star)
+                            .map(|s| s.coord.ra)
+                            .unwrap_or(0.0),
+                        catalog
+                            .get(question.target_star)
+                            .map(|s| s.coord.dec)
+                            .unwrap_or(0.0)
                     );
 
                     for (i, choice) in question.choices.iter().enumerate() {
@@ -215,26 +227,38 @@ fn main() {
             }
 
             println!("=== Results ===");
-            println!("Score: {}/{} ({:.0}%)", correct, total,
-                if total > 0 { (correct as f64 / total as f64) * 100.0 } else { 0.0 });
+            println!(
+                "Score: {}/{} ({:.0}%)",
+                correct,
+                total,
+                if total > 0 {
+                    (correct as f64 / total as f64) * 100.0
+                } else {
+                    0.0
+                }
+            );
         }
 
         Commands::ListNamed { max_magnitude } => {
             let catalog = generate_placeholder_catalog();
 
             println!("Named stars (magnitude < {:.1}):\n", max_magnitude);
-            println!("{:<20} {:>6} {:>8} {:>8} {:>10}",
-                "Name", "Mag", "RA(h)", "Dec(°)", "Const");
+            println!(
+                "{:<20} {:>6} {:>8} {:>8} {:>10}",
+                "Name", "Mag", "RA(h)", "Dec(°)", "Const"
+            );
             println!("{}", "-".repeat(56));
 
-            let mut named: Vec<_> = catalog.named_stars()
+            let mut named: Vec<_> = catalog
+                .named_stars()
                 .into_iter()
                 .filter(|s| s.magnitude < max_magnitude)
                 .collect();
             named.sort_by(|a, b| a.magnitude.partial_cmp(&b.magnitude).unwrap());
 
             for star in named {
-                println!("{:<20} {:>6.2} {:>8.3} {:>8.2} {:>10}",
+                println!(
+                    "{:<20} {:>6.2} {:>8.3} {:>8.2} {:>10}",
                     star.display_name(),
                     star.magnitude,
                     star.coord.ra,

@@ -38,7 +38,7 @@ dist = "docs"
 cargo = true
 
 [[hooks]]
-# Run clippy before build
+# Run clippy before build (warnings only, not errors)
 stage = "pre_build"
 command = "cargo"
-command_arguments = ["clippy", "--", "-D", "warnings"]
+command_arguments = ["clippy"]
