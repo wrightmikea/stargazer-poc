@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Stargazer - An interactive star name learning game built with Rust and WebAssembly">
+    <meta name="theme-color" content="#0a0a14">
+    
+    <title>Stargazer - Star Name Quiz</title>
+    
+    <link data-trunk rel="css" href="static/styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Spectral:wght@300;400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Trunk will insert the WASM bundle here -->
+    <link data-trunk rel="rust" data-wasm-opt="z" data-target-name="stargazer_poc" />
+    
+    <noscript>
+        <div class="no-js">
+            <h1>JavaScript Required</h1>
+            <p>Stargazer requires JavaScript and WebAssembly to run.</p>
+            <p>Please enable JavaScript in your browser settings.</p>
+        </div>
+    </noscript>
+</body>
+</html>

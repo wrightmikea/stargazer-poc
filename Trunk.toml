@@ -1,0 +1,44 @@
+# Trunk.toml - Configuration for Trunk WASM bundler
+# https://trunkrs.dev/configuration/
+
+[build]
+# The index HTML file to drive the bundling process
+target = "index.html"
+
+# Build in release mode by default
+release = false
+
+# The output directory for build artifacts
+dist = "dist"
+
+# Use relative paths for assets (allows deployment to any subdirectory)
+public_url = "./"
+
+[watch]
+# Watch patterns for automatic rebuild
+watch = ["src", "static", "index.html"]
+
+# Ignored paths
+ignore = ["target", "dist"]
+
+[serve]
+# Development server configuration
+address = "127.0.0.1"
+port = 8080
+
+# Open browser automatically
+open = true
+
+# Enable WebSocket for live reload
+ws_protocol = "ws"
+
+[clean]
+# Directories to clean
+dist = "dist"
+cargo = true
+
+[[hooks]]
+# Run clippy before build
+stage = "pre_build"
+command = "cargo"
+command_arguments = ["clippy", "--", "-D", "warnings"]
