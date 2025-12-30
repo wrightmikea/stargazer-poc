@@ -11,6 +11,9 @@ use std::rc::Rc;
 use wasm_bindgen::JsCast;
 use yew::prelude::*;
 
+#[cfg(not(target_arch = "wasm32"))]
+use crate::data::{load_stars_from_json, StarCatalog};
+
 /// The main application component
 #[function_component(App)]
 pub fn app() -> Html {

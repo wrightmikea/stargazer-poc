@@ -2,9 +2,9 @@
 
 A WebAssembly-based interactive game for learning star names, built with Rust and Yew framework.
 
-[![Live Demo](https://img.shields.io/badge/demo-live-blue?style=for-the-badge&logo=github)](https://wrightmikea.github.io/stargazer-poc/?ts=1767126791)
+[![Live Demo](https://img.shields.io/badge/demo-live-blue?style=for-the-badge&logo=github)](https://wrightmikea.github.io/stargazer-poc/)
 
-![Stargazer Screenshot](./docs/images/screenshot.png?ts=1767126791)
+<img src="./docs/images/screenshot.png?ts=1767126791" alt="Stargazer Screenshot" width="800">
 
 ## Overview
 
