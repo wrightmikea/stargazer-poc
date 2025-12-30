@@ -11,8 +11,8 @@ release = false
 # The output directory for build artifacts
 dist = "docs"
 
-# Use relative paths for assets (allows deployment to any subdirectory)
-public_url = "./"
+# For GitHub Pages with docs folder, use root-relative paths
+public_url = "/"
 
 [watch]
 # Watch patterns for automatic rebuild
