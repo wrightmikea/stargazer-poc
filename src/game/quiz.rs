@@ -106,33 +106,12 @@ impl<'a> QuizGenerator<'a> {
         // Try to use tile system if available
         if let Some(tile_system) = self.tile_system.as_ref() {
             if let Some(star_tiles) = tile_system.get_tiles_for_star(correct_star.id) {
-            // Find tile at current zoom
-            let current_tile = star_tiles.iter().find(|t| t.zoom == self.current_zoom);
+                // Find tile at current zoom
+                let current_tile = star_tiles.iter().find(|t| t.zoom == self.current_zoom);
 
-            if let Some(tile_id) = current_tile {
-                // Get named stars in same tile
-                if let Some(tile) = tile_system.get_tile(tile_id) {
-                    for &star_id in &tile.named_star_ids {
-                        if let Some(star) = self.catalog.get(star_id) {
-                            if let Some(ref name) = star.name {
-                                if !used_names.contains(name) && name.len() >= 3 {
-                                    distractors.push(name.clone());
-                                    used_names.insert(name.clone());
-
-                                    if distractors.len() >= count {
-                                        return distractors;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-
-                // If still need more, check adjacent tiles
-                if distractors.len() < count {
-                    let adjacent = tile_system.get_adjacent_tiles(tile_id);
-
-                    for tile in adjacent {
+                if let Some(tile_id) = current_tile {
+                    // Get named stars in same tile
+                    if let Some(tile) = tile_system.get_tile(tile_id) {
                         for &star_id in &tile.named_star_ids {
                             if let Some(star) = self.catalog.get(star_id) {
                                 if let Some(ref name) = star.name {
@@ -149,10 +128,31 @@ impl<'a> QuizGenerator<'a> {
                         }
                     }
 
-                    if distractors.len() >= count {
-                        return distractors;
+                    // If still need more, check adjacent tiles
+                    if distractors.len() < count {
+                        let adjacent = tile_system.get_adjacent_tiles(tile_id);
+
+                        for tile in adjacent {
+                            for &star_id in &tile.named_star_ids {
+                                if let Some(star) = self.catalog.get(star_id) {
+                                    if let Some(ref name) = star.name {
+                                        if !used_names.contains(name) && name.len() >= 3 {
+                                            distractors.push(name.clone());
+                                            used_names.insert(name.clone());
+
+                                            if distractors.len() >= count {
+                                                return distractors;
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        if distractors.len() >= count {
+                            return distractors;
+                        }
                     }
-                }
                 }
             }
         }
@@ -165,7 +165,7 @@ impl<'a> QuizGenerator<'a> {
             .filter(|s| {
                 s.name
                     .as_ref()
-                    .map_or(false, |n| !used_names.contains(n) && n.len() >= 3)
+                    .is_some_and(|n| !used_names.contains(n) && n.len() >= 3)
             })
             .collect();
 
@@ -187,8 +187,8 @@ impl<'a> QuizGenerator<'a> {
         let correct_name = star.name.clone()?;
 
         // Decide if this will be a "none of above" question
-        let is_none_question = self.config.include_none_option
-            && rng.gen::<f64>() < self.config.none_probability;
+        let is_none_question =
+            self.config.include_none_option && rng.gen::<f64>() < self.config.none_probability;
 
         let mut choices = Vec::with_capacity(self.config.num_choices);
 
@@ -197,11 +197,8 @@ impl<'a> QuizGenerator<'a> {
             let distractors = if self.tile_system.is_some() {
                 self.generate_tile_distractors(star, self.config.num_choices - 1, rng)
             } else {
-                self.catalog.random_distractors(
-                    &correct_name,
-                    self.config.num_choices - 1,
-                    rng,
-                )
+                self.catalog
+                    .random_distractors(&correct_name, self.config.num_choices - 1, rng)
             };
 
             choices.extend(distractors);
@@ -214,39 +211,32 @@ impl<'a> QuizGenerator<'a> {
             let distractors = if self.tile_system.is_some() {
                 self.generate_tile_distractors(star, self.config.num_choices - 1, rng)
             } else {
-                self.catalog.random_distractors(
-                    &correct_name,
-                    self.config.num_choices - 1,
-                    rng,
-                )
+                self.catalog
+                    .random_distractors(&correct_name, self.config.num_choices - 1, rng)
             };
 
             choices.extend(distractors);
         }
 
         // Decide if this will be a "none of above" question
-        let is_none_question = self.config.include_none_option
-            && rng.gen::<f64>() < self.config.none_probability;
+        let is_none_question =
+            self.config.include_none_option && rng.gen::<f64>() < self.config.none_probability;
 
         let mut choices = Vec::with_capacity(self.config.num_choices);
 
         if is_none_question {
             // Get distractors (not including the correct answer)
-            let distractors = self.catalog.random_distractors(
-                &correct_name,
-                self.config.num_choices - 1,
-                rng,
-            );
+            let distractors =
+                self.catalog
+                    .random_distractors(&correct_name, self.config.num_choices - 1, rng);
             choices.extend(distractors);
             choices.push("none of above".to_string());
         } else {
             // Include correct answer plus distractors
             choices.push(correct_name.clone());
-            let distractors = self.catalog.random_distractors(
-                &correct_name,
-                self.config.num_choices - 1,
-                rng,
-            );
+            let distractors =
+                self.catalog
+                    .random_distractors(&correct_name, self.config.num_choices - 1, rng);
             choices.extend(distractors);
         }
 
@@ -349,9 +339,10 @@ mod tests {
         let mut rng = rand::thread_rng();
 
         // Find Sirius
-        let sirius = catalog.named_stars().into_iter().find(|s| {
-            s.name.as_deref() == Some("Sirius")
-        });
+        let sirius = catalog
+            .named_stars()
+            .into_iter()
+            .find(|s| s.name.as_deref() == Some("Sirius"));
 
         assert!(sirius.is_some());
         let q = generator.generate_for_star(sirius.unwrap(), &mut rng);

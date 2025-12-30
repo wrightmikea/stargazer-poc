@@ -3,10 +3,14 @@
 //! The root component that assembles all UI pieces and manages global state.
 
 use crate::components::{Controls, QuizDropdown, ScoreDisplay, StarMap, SummaryPopup};
-use crate::data::{generate_placeholder_catalog, load_stars_from_json, StarCatalog, TileSystem, ZoomLevel};
+use crate::data::{
+    generate_placeholder_catalog, load_stars_from_json, StarCatalog, TileSystem, ZoomLevel,
+};
 use crate::game::{game_reducer, GameAction, GameState, QuizConfig, QuizGenerator};
+use gloo::events::EventListener;
 use rand::SeedableRng;
 use std::rc::Rc;
+use wasm_bindgen::JsCast;
 use yew::prelude::*;
 
 /// The main application component
@@ -83,12 +87,8 @@ pub fn app() -> Html {
                         let zoom_level = ZoomLevel((current_zoom.log2().floor() as u8).clamp(0, 5));
 
                         // Use tile-aware quiz generator
-                        let generator = QuizGenerator::with_tiles(
-                            &catalog,
-                            config,
-                            &tile_system,
-                            zoom_level,
-                        );
+                        let generator =
+                            QuizGenerator::with_tiles(&catalog, config, &tile_system, zoom_level);
 
                         if let Some(question) = generator.generate_for_star(star, &mut rng) {
                             dispatch.emit(GameAction::StartQuiz {
@@ -106,7 +106,9 @@ pub fn app() -> Html {
     };
 
     // Build the quiz dropdown if active
-    let quiz_panel = if let (Some(quiz), Some(pos)) = (state_clone.quiz.clone(), state_clone.ui.dropdown_position.clone()) {
+    let quiz_panel = if let (Some(quiz), Some(pos)) =
+        (state_clone.quiz.clone(), state_clone.ui.dropdown_position)
+    {
         html! {
             <QuizDropdown
                 quiz={quiz.clone()}
@@ -119,7 +121,9 @@ pub fn app() -> Html {
     };
 
     // Build summary popup if active
-    let summary_panel = if let (Some(quiz), Some(pos)) = (state_clone.quiz.clone(), state_clone.ui.dropdown_position.clone()) {
+    let summary_panel = if let (Some(quiz), Some(pos)) =
+        (state_clone.quiz.clone(), state_clone.ui.dropdown_position)
+    {
         html! {
             <SummaryPopup
                 guesses={state_clone.guess_history.clone()}
@@ -152,21 +156,15 @@ pub fn app() -> Html {
     }
 
     html! {
-            <SummaryPopup
-                guesses={state_clone.guess_history.clone()}
-                score={state_clone.score.clone()}
-                on_action={on_action.clone()}
-            />
-        }
-    } else {
-        Html::default()
-    };
-
-    html! {
         <div class="app-container">
+            <a href="https://github.com/wrightmikea/stargazer-poc" class="github-fork-ribbon" target="_blank" rel="noopener noreferrer" title="Fork me on GitHub">
+                <span>{ "Fork me on GitHub" }</span>
+            </a>
             <header class="app-header">
-                <h1 class="app-title">{ "✦ Stargazer" }</h1>
-                <p class="app-subtitle">{ "Test your knowledge of night sky" }</p>
+                <div class="header-left">
+                    <h1 class="app-title">{ "✦ Stargazer" }</h1>
+                    <p class="app-subtitle">{ "Test your knowledge of night sky" }</p>
+                </div>
                 <ScoreDisplay score={state_clone.score.clone()} />
             </header>
 
@@ -175,10 +173,10 @@ pub fn app() -> Html {
                     <div class="star-map-container">
                         <StarMap
                             catalog={catalog.clone()}
-                            viewport={state_clone.viewport.clone()}
-                            magnitude_limit={state_clone.magnitude_limit.clone()}
-                            show_grid={state_clone.show_grid.clone()}
-                            selected_star={state_clone.selected_star.clone()}
+                            viewport={state_clone.viewport}
+                            magnitude_limit={state_clone.magnitude_limit}
+                            show_grid={state_clone.show_grid}
+                            selected_star={state_clone.selected_star}
                             on_action={on_action.clone()}
                         />
                     </div>
@@ -203,9 +201,7 @@ pub fn app() -> Html {
                         <span class="separator">{ "•" }</span>
                         <span class="license">{ "MIT License" }</span>
                         <span class="separator">{ "•" }</span>
-                        <span class="build-info">{ format!("Build: 2025-12-29T17:33:58-08:00 (}}) • Host: mighty • SHA: 6b4f545021f14315eabad7d367a0e8a4a356b255") }</span>
-                        <span class="separator">{ "•" }</span>
-                        <a href="./images/screenshot.png?ts=17671160803N" class="screenshot-link" target="_blank">{ "Screenshot" }</a>
+                        <span class="build-info">{ format!("Build: 2025-12-30T10:55-08:00 • SHA: 7e39ace") }</span>
                     </p>
                 </div>
             </footer>

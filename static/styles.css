@@ -111,6 +111,72 @@ body {
     justify-content: space-between;
     flex-wrap: wrap;
     gap: var(--space-md);
+    position: relative;
+    padding-right: 180px;
+}
+
+.header-left {
+    display: flex;
+    flex-direction: column;
+}
+
+.app-subtitle {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    font-style: italic;
+}
+
+/* GitHub Fork Me Ribbon */
+.github-fork-ribbon {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 200px;
+    overflow: hidden;
+    height: 200px;
+    z-index: 9999;
+    pointer-events: none;
+}
+
+.github-fork-ribbon span {
+    display: none;
+}
+
+.github-fork-ribbon::before,
+.github-fork-ribbon::after {
+    position: absolute;
+    display: block;
+    width: 150px;
+    height: 30px;
+    text-align: center;
+    line-height: 30px;
+    font-family: var(--font-mono);
+    font-size: 13px;
+    font-weight: 700;
+    color: #fff;
+    text-decoration: none;
+    pointer-events: auto;
+    background-color: var(--accent-gold);
+    box-shadow: 0 5px 10px rgba(0, 0, 0, 0.3);
+}
+
+.github-fork-ribbon::before {
+    content: "";
+    top: 25px;
+    right: -35px;
+    transform: rotate(45deg);
+    background: var(--accent-gold);
+}
+
+.github-fork-ribbon::after {
+    content: "Fork me on GitHub";
+    top: 40px;
+    right: -40px;
+    transform: rotate(45deg);
+}
+
+.github-fork-ribbon:hover::after {
+    background: var(--accent-blue);
 }
 
 .app-title {
@@ -125,6 +191,24 @@ body {
     font-size: 0.9rem;
     color: var(--text-secondary);
     font-style: italic;
+}
+
+/* GitHub Link */
+.github-link {
+    position: absolute;
+    top: 0;
+    right: 0;
+    padding: var(--space-md) var(--space-xl);
+    color: var(--text-muted);
+    transition: color var(--transition-fast);
+}
+
+.github-link:hover {
+    color: var(--accent-blue);
+}
+
+.github-icon {
+    display: block;
 }
 
 /* Main Content Area */
@@ -156,7 +240,7 @@ body {
     width: 300px;
     max-width: 25%;
     min-width: 250px;
-    padding: var(--space-sm);
+    padding: 60px var(--space-sm) var(--space-sm) var(--space-sm);
     overflow-y: auto;
     flex-shrink: 0;
     position: relative;

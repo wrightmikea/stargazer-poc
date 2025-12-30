@@ -3,8 +3,8 @@
 //! Provides UI controls for zoom, magnitude filter, and display settings.
 
 use crate::game::GameAction;
-use yew::prelude::*;
 use web_sys::HtmlInputElement;
+use yew::prelude::*;
 
 /// Props for the Controls component
 #[derive(Properties, PartialEq)]

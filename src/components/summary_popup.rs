@@ -2,7 +2,7 @@
 //!
 //! Displays a summary of guesses when user clicks "Done".
 
-use crate::game::{GameAction, GameState, GuessSummary, ScoreState};
+use crate::game::{GameAction, GuessSummary, ScoreState};
 use yew::prelude::*;
 
 /// Props for SummaryPopup component

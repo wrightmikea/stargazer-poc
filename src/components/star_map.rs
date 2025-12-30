@@ -41,13 +41,10 @@ pub fn star_map(props: &StarMapProps) -> Html {
     // Get visible stars
     let (ra_min, ra_max) = props.viewport.ra_range();
     let (dec_min, dec_max) = props.viewport.dec_range();
-    let visible_stars = props.catalog.stars_in_range(
-        ra_min,
-        ra_max,
-        dec_min,
-        dec_max,
-        props.magnitude_limit,
-    );
+    let visible_stars =
+        props
+            .catalog
+            .stars_in_range(ra_min, ra_max, dec_min, dec_max, props.magnitude_limit);
 
     // Event handlers
     let on_mouse_down = {
@@ -188,10 +185,15 @@ fn render_grid(viewport: &Viewport) -> Html {
     let mut dec = -80.0;
     while dec <= 80.0 {
         let screen_left = viewport.celestial_to_screen(&crate::data::CelestialCoord::new(0.0, dec));
-        let screen_right = viewport.celestial_to_screen(&crate::data::CelestialCoord::new(24.0, dec));
+        let screen_right =
+            viewport.celestial_to_screen(&crate::data::CelestialCoord::new(24.0, dec));
 
         // Celestial equator gets special treatment
-        let stroke_color = if (dec.abs()) < 0.1 { "#7a2a5a" } else { "#1a3a5a" };
+        let stroke_color = if (dec.abs()) < 0.1 {
+            "#7a2a5a"
+        } else {
+            "#1a3a5a"
+        };
         let stroke_width = if (dec.abs()) < 0.1 { "2" } else { "1" };
 
         lines.push(html! {

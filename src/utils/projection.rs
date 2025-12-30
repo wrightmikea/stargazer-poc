@@ -131,7 +131,7 @@ impl Projection for Viewport {
 
         // Handle RA wrap-around
         let mut ra_offset = coord.ra - ra_min;
-        
+
         // For full-sky view (zoom <= 1), use simple linear mapping
         // For zoomed views, handle wrap-around
         if self.zoom > 1.01 {

@@ -3,7 +3,7 @@
 //! Uses a reducer pattern for predictable state updates,
 //! compatible with Yew's use_reducer hook.
 
-use crate::data::{StarId};
+use crate::data::StarId;
 use crate::utils::Viewport;
 use std::rc::Rc;
 

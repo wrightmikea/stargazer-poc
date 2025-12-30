@@ -66,9 +66,7 @@ pub fn quiz_dropdown(props: &QuizDropdownProps) -> Html {
         .map(|(i, choice)| {
             let is_selected = quiz.selected_answer.as_ref() == Some(choice);
             let is_correct = quiz.answered && choice == &quiz.correct_name;
-            let is_wrong = quiz.answered
-                && is_selected
-                && quiz.was_correct == Some(false);
+            let is_wrong = quiz.answered && is_selected && quiz.was_correct == Some(false);
 
             let choice_class = classes!(
                 "quiz-choice",
@@ -104,7 +102,11 @@ pub fn quiz_dropdown(props: &QuizDropdownProps) -> Html {
     let action_area = if quiz.answered {
         let was_correct = quiz.was_correct.unwrap_or(false);
         let message = if was_correct { "Correct!" } else { "Incorrect" };
-        let message_class = if was_correct { "result correct" } else { "result wrong" };
+        let message_class = if was_correct {
+            "result correct"
+        } else {
+            "result wrong"
+        };
 
         html! {
             <div class="quiz-result">

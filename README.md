@@ -1,6 +1,10 @@
 # Stargazer - Star Name Matching Game
 
-A WebAssembly-based interactive game for learning star names, built with Rust and the Yew framework.
+A WebAssembly-based interactive game for learning star names, built with Rust and Yew framework.
+
+[![Live Demo](https://img.shields.io/badge/demo-live-blue?style=for-the-badge&logo=github)](https://wrightmikea.github.io/stargazer-poc/?ts=1767126791)
+
+![Stargazer Screenshot](./docs/images/screenshot.png?ts=1767126791)
 
 ## Overview
 
@@ -188,8 +192,20 @@ wasm-pack test --headless --chrome
 
 ### Production Build
 ```bash
+# Build for docs directory
+trunk build --public-url ./docs --dist docs
+
+# Regular release build
 trunk build --release
 ```
+
+### Screenshot Updates
+The screenshot is generated using Playwright MCP:
+1. Run `trunk serve --open` in background
+2. Navigate to http://127.0.0.1:8080/
+3. Take screenshot and save to `./images/screenshot.png`
+4. Copy to docs: `cp ./images/screenshot.png ./docs/images/screenshot.png`
+5. Rebuild with updated screenshot in place
 
 ## Project Structure
 
