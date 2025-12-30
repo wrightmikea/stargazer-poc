@@ -361,6 +361,7 @@ pub fn game_reducer(state: Rc<GameState>, action: GameAction) -> Rc<GameState> {
         }
         GameAction::ShowSummary => {
             new_state.ui.summary_shown = true;
+            new_state.quiz = None;
         }
         GameAction::HideSummary => {
             new_state.ui.summary_shown = false;

@@ -120,9 +120,7 @@ pub fn app() -> Html {
     };
 
     // Build summary popup if active
-    let summary_panel = if let (Some(_quiz), Some(_pos)) =
-        (state_clone.quiz.clone(), state_clone.ui.dropdown_position)
-    {
+    let summary_panel = if state_clone.ui.summary_shown {
         html! {
             <SummaryPopup
                 guesses={state_clone.guess_history.clone()}
