@@ -9,7 +9,7 @@ target = "index.html"
 release = false
 
 # The output directory for build artifacts
-dist = "dist"
+dist = "docs"
 
 # Use relative paths for assets (allows deployment to any subdirectory)
 public_url = "./"
@@ -19,7 +19,7 @@ public_url = "./"
 watch = ["src", "static", "index.html"]
 
 # Ignored paths
-ignore = ["target", "dist"]
+ignore = ["target", "docs"]
 
 [serve]
 # Development server configuration
@@ -34,7 +34,7 @@ ws_protocol = "ws"
 
 [clean]
 # Directories to clean
-dist = "dist"
+dist = "docs"
 cargo = true
 
 [[hooks]]
