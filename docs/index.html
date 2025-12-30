@@ -9,17 +9,17 @@
     <title>Stargazer - Star Name Quiz</title>
     
     <link rel="icon" type="image/x-icon" href="favicon.ico">
-    <link rel="stylesheet" href="/styles-81a9b48b57df764b.css" integrity="sha384-E5kIT339W0IfkO1jvRuFEUm/igSSHYVP5OQ8cq9UCLmyRNpQY3TR56UHCuaVttvh"/>
+    <link rel="stylesheet" href="./styles-81a9b48b57df764b.css" integrity="sha384-E5kIT339W0IfkO1jvRuFEUm/igSSHYVP5OQ8cq9UCLmyRNpQY3TR56UHCuaVttvh"/>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Spectral:wght@300;400;500&display=swap" rel="stylesheet">
-<link rel="modulepreload" href="/stargazer-poc-a99e5b97289419e4.js" crossorigin="anonymous" integrity="sha384-0O09t0xAD2lrdPlyj3MkuIXIo65x9NpB5dFBIAuaGpNmnTyRdiG4aNvLuiUWAXUi"><link rel="preload" href="/stargazer-poc-a99e5b97289419e4_bg.wasm" crossorigin="anonymous" integrity="sha384-hqxHjXsw8Q3menN1Ks7iN7yA5Mbg9RAO3i9dWJPaVRQy2jZfsV5tPo4qCrwEmtwH" as="fetch" type="application/wasm"></head>
+<link rel="modulepreload" href="./stargazer-poc-a99e5b97289419e4.js" crossorigin="anonymous" integrity="sha384-6rZDz1xMY348ILMtX0JRg6RdoWH1WadlvVpH6VN4coP2c8OF50k8g2mX+A6IrNUd"><link rel="preload" href="./stargazer-poc-a99e5b97289419e4_bg.wasm" crossorigin="anonymous" integrity="sha384-sVYAat+qVLkLbjFmGa512QuCwH9ztvDFEXU+del4yLMxgX+ZDsAMpsn0eXxSAzON" as="fetch" type="application/wasm"></head>
 <body>
     <!-- Trunk will insert the WASM bundle here -->
     
 <script type="module">
-import init, * as bindings from '/stargazer-poc-a99e5b97289419e4.js';
-const wasm = await init({ module_or_path: '/stargazer-poc-a99e5b97289419e4_bg.wasm' });
+import init, * as bindings from './stargazer-poc-a99e5b97289419e4.js';
+const wasm = await init({ module_or_path: './stargazer-poc-a99e5b97289419e4_bg.wasm' });
 
 
 window.wasmBindings = bindings;

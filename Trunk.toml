@@ -12,7 +12,7 @@ release = false
 dist = "docs"
 
 # For GitHub Pages with docs folder, use root-relative paths
-public_url = "/"
+public_url = "./"
 
 [watch]
 # Watch patterns for automatic rebuild
