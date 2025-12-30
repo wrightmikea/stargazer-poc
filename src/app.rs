@@ -3,9 +3,7 @@
 //! The root component that assembles all UI pieces and manages global state.
 
 use crate::components::{Controls, QuizDropdown, ScoreDisplay, StarMap, SummaryPopup};
-use crate::data::{
-    generate_placeholder_catalog, load_stars_from_json, StarCatalog, TileSystem, ZoomLevel,
-};
+use crate::data::{generate_placeholder_catalog, TileSystem, ZoomLevel};
 use crate::game::{game_reducer, GameAction, GameState, QuizConfig, QuizGenerator};
 use gloo::events::EventListener;
 use rand::SeedableRng;
@@ -28,9 +26,7 @@ pub fn app() -> Html {
         #[cfg(not(target_arch = "wasm32"))]
         {
             // Try loading from JSON in development/testing
-            let result = load_stars_from_json();
-            if result.is_ok() {
-                let stars = result.unwrap();
+            if let Ok(stars) = load_stars_from_json() {
                 let mut catalog = StarCatalog::new();
                 for star in stars {
                     catalog.add_star(star);
@@ -121,7 +117,7 @@ pub fn app() -> Html {
     };
 
     // Build summary popup if active
-    let summary_panel = if let (Some(quiz), Some(pos)) =
+    let summary_panel = if let (Some(_quiz), Some(_pos)) =
         (state_clone.quiz.clone(), state_clone.ui.dropdown_position)
     {
         html! {
