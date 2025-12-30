@@ -119,8 +119,39 @@ pub fn app() -> Html {
     };
 
     // Build summary popup if active
-    let summary_panel = if state_clone.ui.summary_shown {
+    let summary_panel = if let (Some(quiz), Some(pos)) = (state_clone.quiz.clone(), state_clone.ui.dropdown_position.clone()) {
         html! {
+            <SummaryPopup
+                guesses={state_clone.guess_history.clone()}
+                score={state_clone.score.clone()}
+                on_action={on_action.clone()}
+            />
+        }
+    } else {
+        Html::default()
+    };
+
+    // ESC key listener to dismiss summary popup
+    {
+        let dispatch = dispatch.clone();
+        let summary_shown = state_clone.ui.summary_shown;
+        use_effect_with(summary_shown, move |_| {
+            let listener = if summary_shown {
+                let window = web_sys::window().expect("no window");
+                Some(EventListener::new(&window, "keydown", move |event| {
+                    let event = event.dyn_ref::<web_sys::KeyboardEvent>().unwrap();
+                    if event.key() == "Escape" {
+                        dispatch.emit(GameAction::HideSummary);
+                    }
+                }))
+            } else {
+                None
+            };
+            move || drop(listener)
+        });
+    }
+
+    html! {
             <SummaryPopup
                 guesses={state_clone.guess_history.clone()}
                 score={state_clone.score.clone()}
